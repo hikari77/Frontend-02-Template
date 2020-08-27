@@ -58,6 +58,46 @@ document.addEventListener('mousedown', e => {
 document.addEventListener('mouseup', () => mousedown = false);
 document.addEventListener('contextmenu', e => e.preventDefault());
 
+
+
+
+/*
+    **************
+    Find Path part
+    **************
+*/
+
+class Sorted {
+    constructor(data, compare) {
+        this.data = data.slice();
+        this.compare = compare || ((a, b) => a - b);
+    }
+
+    popMin(){
+        if(!this.data.length) return;
+
+        let min = this.data[0];
+        let minIndex = 0;
+
+        for(let i = 1; i < this.data.length; i++) {
+            if(this.compare(this.data[i], min) < 0){
+                min = this.data[i]
+                minIndex = i;
+            }
+        }
+        this.data[minIndex] = this.data[this.data.length - 1];
+        this.data.pop();
+        return min;
+    }
+
+    push(value) {
+        this.data.push(value);
+    }
+    get length(){
+        return this.data.length;
+    }
+}
+
 function sleep(t) {
         return new Promise((res, rej) => {
             setTimeout(res, t);
@@ -65,41 +105,88 @@ function sleep(t) {
     }
 
 async function path(map, start, end) {
-    let queue = [start];
-    const DIR = [[0, 1], [0, -1], [1, 0], [-1, 0]]; //can move 4 directions
 
+    const DIR = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+    let distanceMap = new Map()
+    let queue = new Sorted([start], (a, b) => dist(a) - dist(b));
 
-    function isValid(map, x, y) {
+    distanceMap.set(`${start[0]},${start[1]}`, 0)
+
+    function dist(point){
+        return (point[0] - end[0]) ** 2 + (point[1] - end[1]) ** 2;
+    }
+
+    function isValid( x, y) {
         if(x < 0 || x >= 100 || y < 0 || y >= 100) return false;
         if(map[y * 100 + x] === 1 || map[y * 100 + x] === 2) return false;
-        // if( map[y * 100 + x] === 2) return false;
         return true;
     }
 
+    function findPossible(x,y){
+        let possible = [];
+        for(let [d_x, d_y] of DIR){
+            let pre_x = x- d_x
+            let pre_y = y - d_y
+            possible.push([pre_x, pre_y])
+        }
+        return possible
+    }
+
+    function generatePath() {
+        let step = distanceMap.get(`${end[0]},${end[1]}`);
+        let pre = end;
+
+        container.children[start[1]* 100 + start[0]].style.backgroundColor = 'blue';
+
+        outer: while(pre[0] !== start[0] || pre[1] !== start[1]) { // bug here inf loop
+            let possible = findPossible(pre[0], pre[1]);
+
+            for(let [p_x, p_y] of possible){
+                let p = `${p_x},${p_y}`;
+                if(distanceMap.has(p) && distanceMap.get(p) === (step - 1)){
+                    let pointArr = p.split(',');
+                    let x = parseInt(pointArr[0]), y = parseInt(pointArr[1]);
+
+                    container.children[y * 100 + x].style.backgroundColor = 'purple';
+                    pre = [x, y];
+                    step--;
+                    if (step == 1) break outer; // trick to void inf loop
+                }
+            }
+        }
+    }
+
     while(queue.length > 0){
-        let [x, y] = queue.shift();
+        let [x, y] = queue.popMin();
         if(x === end[0] && y === end[1]){
+
             container.children[y * 100 + x].style.backgroundColor = 'red'
             console.log('found it')
-            return true; 
+            generatePath();
+            return ; 
         }
 
         for(let [d_x, d_y] of DIR){     
             let next_x = d_x + x;
             let next_y = d_y + y;
-            if(!isValid(map, next_x, next_y))
+            if(!isValid(next_x, next_y))
                 continue;
             
             queue.push([next_x, next_y])
-            await sleep(30)
+
+            let preDist = distanceMap.get(`${x},${y}`);
+            distanceMap.set(`${next_x},${next_y}`, preDist + 1);
+
             map[next_y * 100 + next_x] = 2;
-            container.children[next_y * 100 + next_x].style.backgroundColor = 'lightgreen'
+            await sleep(30);
+            container.children[next_y * 100 + next_x].style.backgroundColor = 'lightgreen';
         }
     }
     console.log('not found')
-    return false;
+    return ;
 }
 
-// path(map, [0, 0], [10,10]);
+// path(map, [0, 0], [20,20]);   
+// path(map, [10, 20], [60,60]); 
 
 </script>
