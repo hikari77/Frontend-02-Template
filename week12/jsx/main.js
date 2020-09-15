@@ -1,78 +1,38 @@
-function createElement(type, attributes, ...children){
-    let element;
-    if(typeof type === 'string')
-        element = new ElementWrapper(type);
-    else
-        element = new type;
-    
-    for(let name in attributes) {
-        element.setAttribute(name, attributes[name]);
-    }
+import {Component, createElement} from './framework';
 
-    for(let child of children) {
-        if(typeof child === 'string') {
-            child = new TextWrapper(child)
-        }
-        element.appendChild(child)
-    }
-    return element;
-}
 
-class ElementWrapper{
-
-    constructor(type){
-        this.root = document.createElement(type);
-    }
-    setAttribute(name, value){
-        this.root.setAttribute(name, value)
-    }
-    appendChild(child){
-        child.mountTo(this.root)
-    }
-    mountTo(parent){
-        parent.appendChild(this.root)
-    }
-}
-
-class TextWrapper{
-
-    constructor(content){
-        this.root = document.createTextNode(content);
-    }
-    setAttribute(name, value){
-        this.root.setAttribute(name, value)
-    }
-    appendChild(child){
-        child.mountTo(this.root)
-    }
-    mountTo(parent){
-        parent.appendChild(this.root)
-    }
-}
-
-class Div {
+class Carousel extends Component {
     constructor(){
-        this.root = document.createElement("div");
+        super();
+        this.attributes = Object.create(null);
     }
     setAttribute(name, value){
-        this.root.setAttribute(name, value)
+        this.attributes[name] = value;
     }
-    appendChild(child){
-        child.mountTo(this.root)
+    render(){
+        this.root = document.createElement("div")
+
+        for(let record of this.attributes.src){
+            let child = document.createElement('img');
+            child.src = record;
+            this.root.appendChild(child)
+        }
+        return this.root;
     }
     mountTo(parent){
-        parent.appendChild(this.root)
+        parent.appendChild(this.render())
     }
 }
 
 
-let a = <Div id="a">
-            <span>a</span>
-            <span>b</span>
-            <span>c</span>
-        </Div>
 
+let d = [
+    '/statics/cat1.jpg',
+    '/statics/cat2.jpg',
+    '/statics/cat3.jpg'
+]
 
 // document.body.appendChild(a);
 
+let a = <Carousel src={d}/>
 a.mountTo(document.body)
