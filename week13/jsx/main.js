@@ -18,7 +18,7 @@ let tl = new Timeline();
 window.tl = tl;
 
 window.animation = new Animation({set a(v) {console.log(v)}}, "a", 0, 100, 1000, null)
+// object, property, startValue, endValue, duration, delay, timingFunction
 // tl.add(new Animation({set a(v) {console.log(v)}}, "a", 0, 100, 1000, null))
-
 
 tl.start();
