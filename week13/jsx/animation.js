@@ -2,6 +2,8 @@ const TICK = Symbol("tick");
 const TICK_HANDLER = Symbol("tick-handler")
 const ANIMATIONS = Symbol("animations")
 const START_TIME = Symbol('start-time')
+const PAUSE_START = Symbol("pause-start");
+const PAUSE_TIME = Symbol("pause-time");
 
 export class Timeline {
     constructor(){
@@ -12,6 +14,7 @@ export class Timeline {
 
     start(){
         let startTime = Date.now()
+        this[PAUSE_TIME] = 0;
         console.log(startTime)
 
         this[TICK] = () => {
@@ -20,9 +23,9 @@ export class Timeline {
                 let t;
 
                 if(this[START_TIME].get(animation) < startTime)
-                    t = now - startTime;
+                    t = now - startTime - this[PAUSE_TIME];
                 else
-                    t = now - this[START_TIME].get(animation);
+                    t = now - this[START_TIME].get(animation) - this[PAUSE_TIME];
                 
                 if(animation.duration < t){
                     this[ANIMATIONS].delete(animation);
@@ -30,16 +33,22 @@ export class Timeline {
                 }
                 animation.receive(t)
             }
-            requestAnimationFrame(this[TICK])
+            this[TICK_HANDLER] = requestAnimationFrame(this[TICK])
         }
         this[TICK]();
     }
 
 
-    pause(){}
-    resume(){}
+    pause() {
+        this[PAUSE_START] = Date.now()
+        cancelAnimationFrame(this[TICK_HANDLER]);
+    }
 
-    reset(){}
+    resume() {
+        this[PAUSE_TIME] += Date.now() - this[PAUSE_START];
+        this[TICK]();
+    }
+
     add(animation, startTime){
         if(arguments.length < 2) {
             startTime = Date.now()
@@ -47,11 +56,12 @@ export class Timeline {
         this[ANIMATIONS].add(animation)
         this[START_TIME].set(animation, startTime);
     }
+    reset(){}
 
 }
 
 export class Animation {
-    constructor(object, property, startValue, endValue, duration, delay, timingFunction) {
+    constructor(object, property, startValue, endValue, duration, delay, timingFunction, template) {
         this.object = object;
         this.property = property;
         this.startValue = startValue;
@@ -59,11 +69,12 @@ export class Animation {
         this.duration = duration;
         this.timingFunction = timingFunction;
         this.delay = delay;
+        this.template = template
     }
 
     receive(time) {
 
         let range = this.endValue - this.startValue
-        this.object[this.property] = this.startValue + range * time / this.duration
+        this.object[this.property] = this.template(this.startValue + range * time / this.duration);
     }
 }
