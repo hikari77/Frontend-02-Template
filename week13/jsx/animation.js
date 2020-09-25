@@ -74,7 +74,7 @@ export class Timeline {
 
         this[ANIMATIONS] = new Set()
         this[START_TIME] = new Map()
-        thi[PAUSE_START] = 0;
+        this[PAUSE_START] = 0;
         this[TICK_HANDLER] = null;
     }
 

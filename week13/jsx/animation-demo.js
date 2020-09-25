@@ -4,7 +4,6 @@ import { ease } from './ease.js'
 let tl = new Timeline();
 
 tl.start();
-document.querySelector("#el").style
 tl.add(new Animation(
     document.querySelector("#el").style,
     "transform",
